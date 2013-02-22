@@ -1,0 +1,54 @@
+<?php
+/**
+ * @file
+ * Code for the GSB Feature Person Display feature.
+ */
+
+include_once 'gsb_feature_person_display.features.inc';
+
+function gsb_feature_person_display_entity_info_alter(&$entity_info) {
+
+  $entity_info['fieldable_panels_pane']['bundles']['gsb_person_fpp'] = array(
+    'label' => t('Add GSB Persons'),
+    'pane category' => t('GSB Person FPP'),
+    'pane top level' => TRUE, // set to true to make this show as a top level icon
+    'pane icon' => drupal_get_path('module', 'panopoly_widgets') . '/images/icon_text.png',
+    'admin' => array(
+      'path' => 'admin/structure/fieldable-panels-panes/manage/%fieldable_panels_panes_type',
+      'bundle argument' => 4,
+      // Note that this has all _ replaced with - from the bundle name.
+      'real path' => 'admin/structure/fieldable-panels-panes/manage/gsb-person-fpp',
+      'access arguments' => array('administer fieldable panels panes'),
+    ),
+  );
+
+}
+
+function gsb_feature_person_display_preprocess_fieldable_panels_pane(&$vars) {
+
+  if (isset($vars['elements']['#bundle']) && $vars['elements']['#bundle'] == "gsb_person_fpp") {
+  } else {
+    /* this is not the droid (fpp) we are looking for */
+    return;
+  }
+
+  $view_name = "gsb_person_fpp_view";
+  $display_id = "list";
+
+  $fpp_id = $vars['elements']['#element']->fpid;
+
+  if (isset($vars['elements']['#element'])) {
+    $id = $vars['elements']['#element']->field_display_style['und'][0]['value'];
+    if ($id == "person-grid-view") {
+      $display_id = "grid";
+    }
+  }
+
+  if ($view = views_get_view($view_name)) {
+
+    $view->set_display($display_id);
+    $vars['fields'] = $view->preview($display_id, array($fpp_id));
+
+  }
+
+}
