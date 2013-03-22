@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Code for the GSB Feature Person Display feature.
@@ -6,8 +7,10 @@
 
 include_once 'gsb_feature_person_display.features.inc';
 
+/**
+ * Implements hook_entity_info_alter().
+ */
 function gsb_feature_person_display_entity_info_alter(&$entity_info) {
-
   $entity_info['fieldable_panels_pane']['bundles']['gsb_person_fpp'] = array(
     'label' => t('Add GSB Persons'),
     'pane category' => t('GSB Person FPP'),
@@ -21,34 +24,26 @@ function gsb_feature_person_display_entity_info_alter(&$entity_info) {
       'access arguments' => array('administer fieldable panels panes'),
     ),
   );
-
 }
 
-function gsb_feature_person_display_preprocess_fieldable_panels_pane(&$vars) {
-
-  if (isset($vars['elements']['#bundle']) && $vars['elements']['#bundle'] == "gsb_person_fpp") {
-  } else {
-    /* this is not the droid (fpp) we are looking for */
+/**
+ * Implements hook_preprocess_HOOK() for theme_fieldable_panels_pane().
+ */
+function gsb_feature_person_display_preprocess_fieldable_panels_pane(&$variables) {
+  if (!isset($variables['elements']['#bundle']) || $variables['elements']['#bundle'] != 'gsb_person_fpp') {
     return;
   }
 
-  $view_name = "gsb_person_fpp_view";
-  $display_id = "list";
-
-  $fpp_id = $vars['elements']['#element']->fpid;
-
-  if (isset($vars['elements']['#element'])) {
-    $id = $vars['elements']['#element']->field_display_style['und'][0]['value'];
-    if ($id == "person-grid-view") {
-      $display_id = "grid";
-    }
+  $pane = $variables['elements']['#element'];
+  $display_style = field_get_items('fieldable_panels_pane', $pane, 'field_display_style');
+  if (!empty($display_style['0']['value']) && $display_style['0']['value'] == 'person-grid-view') {
+    $display_id = 'grid';
+  }
+  else {
+    $display_id = 'list';
   }
 
-  if ($view = views_get_view($view_name)) {
-
-    $view->set_display($display_id);
-    $vars['fields'] = $view->preview($display_id, array($fpp_id));
-
+  if ($view_output = views_embed_view('gsb_person_fpp_view', $display_id, $pane->fpid)) {
+    $variables['fields'] = $view_output;
   }
-
 }
